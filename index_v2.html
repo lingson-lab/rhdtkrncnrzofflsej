@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>공사 구축 관리 시스템</title>
+  <link rel="stylesheet" href="style_v2.css">
+</head>
+<body>
+  <!-- 헤더 -->
+  <div class="header">
+    <div class="header-content">
+      <h1>🏢 공사 구축 관리 시스템</h1>
+      <p>링스온 - 단지별 공사 진행 관리</p>
+    </div>
+  </div>
+
+  <!-- 메인 컨테이너 -->
+  <div class="container">
+    <!-- 메인 탭 -->
+    <div class="main-tabs">
+      <button class="main-tab-btn active" onclick="switchMainTab('calendar')">📅 캘린더</button>
+      <button class="main-tab-btn" onclick="switchMainTab('detail')">📋 상세 관리</button>
+      <button class="main-tab-btn" onclick="switchMainTab('delivery')">🔏 납품확인서</button>
+    </div>
+
+    <!-- 캘린더 탭 -->
+    <div id="calendarTab" class="tab-content active">
+      <div class="main-grid">
+        <!-- 캘린더 영역 -->
+        <div>
+          <!-- 캘린더 뷰 탭 -->
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchView('month')">📅 월간</button>
+            <button class="tab-btn" onclick="switchView('week')">📆 주간</button>
+            <button class="tab-btn" onclick="switchView('day')">📍 일일</button>
+          </div>
+
+          <!-- 네비게이션 -->
+          <div class="nav-bar">
+            <button class="nav-btn" onclick="prevMonth()">◀</button>
+            <div class="nav-title" id="monthTitle">2026년 9월</div>
+            <button class="nav-btn" onclick="nextMonth()">▶</button>
+          </div>
+
+          <!-- 캘린더 -->
+          <div class="calendar-container">
+            <div id="monthView" class="calendar-grid"></div>
+            <div id="weekView" class="week-grid hidden"></div>
+            <div id="dayView" class="day-view hidden"></div>
+          </div>
+        </div>
+
+        <!-- 사이드바: 입력폼 -->
+        <div class="sidebar">
+          <!-- 카테고리 -->
+          <div class="card">
+            <h3>🏷️ 카테고리</h3>
+            <div class="category-list" id="categoryList"></div>
+          </div>
+
+          <!-- 입력폼 -->
+          <div class="card">
+            <h3>➕ 일정 추가</h3>
+            <form onsubmit="addEvent(event)">
+              <div class="form-group">
+                <label class="form-label">단지명</label>
+                <input type="text" id="complexName" class="form-input" placeholder="예: 청라 국제도시" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">카테고리</label>
+                <select id="categorySelect" class="form-select">
+                  <option value="inbound">인바운드 인입</option>
+                  <option value="intro">소개서 전달</option>
+                  <option value="contract_delivery">계약서 전달</option>
+                  <option value="contract_send">계약서 송부</option>
+                  <option value="terminal_work">단말기 공사</option>
+                  <option value="linkage">연동 진행</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">시작일</label>
+                <input type="number" id="startDay" class="form-input" min="1" max="31" value="1" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">기간 (일)</label>
+                <input type="number" id="duration" class="form-input" min="1" max="31" value="3" required>
+              </div>
+
+              <button type="submit" class="submit-btn">추가하기</button>
+            </form>
+
+            <div id="eventListSection" class="event-list-section hidden">
+              <h4>📝 추가된 일정</h4>
+              <div class="event-items" id="eventList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 상세 관리 탭 -->
+    <div id="detailTab" class="tab-content hidden">
+      <div class="detail-container">
+        <!-- 필터링 -->
+        <div class="filter-section">
+          <h3>🔍 단지별 진행 현황</h3>
+          <div class="filter-controls">
+            <input type="text" id="filterComplex" class="filter-input" placeholder="단지명 검색..." onkeyup="filterComplexes()">
+            <select id="filterCategory" class="filter-select" onchange="filterComplexes()">
+              <option value="">모든 카테고리</option>
+              <option value="inbound">인바운드 인입</option>
+              <option value="intro">소개서 전달</option>
+              <option value="contract_delivery">계약서 전달</option>
+              <option value="contract_send">계약서 송부</option>
+              <option value="terminal_work">단말기 공사</option>
+              <option value="linkage">연동 진행</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 단지별 상세 정보 -->
+        <div id="complexList" class="complex-list"></div>
+      </div>
+    </div>
+
+    <!-- 납품확인서 탭 -->
+    <div id="deliveryTab" class="tab-content hidden">
+      <div class="delivery-container">
+        <h3>🔏 납품확인서</h3>
+        
+        <!-- 단지 선택 -->
+        <div class="delivery-filter">
+          <select id="deliveryComplexSelect" class="filter-select" onchange="loadDeliveryForm()">
+            <option value="">납품확인서를 작성할 단지를 선택하세요</option>
+          </select>
+        </div>
+
+        <!-- 납품확인서 폼 -->
+        <div id="deliveryForm" class="delivery-form hidden">
+          <form onsubmit="saveDeliveryForm(event)">
+            <div class="delivery-document">
+              <!-- 헤더 -->
+              <div class="doc-header">
+                <h2>납 품 확 인 서</h2>
+              </div>
+
+              <!-- 단지 정보 -->
+              <div class="doc-section">
+                <div class="section-title">단지 정보</div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>단지명</label>
+                    <input type="text" id="delComplexName" class="form-input" readonly>
+                  </div>
+                  <div class="form-group">
+                    <label>납품일자</label>
+                    <input type="date" id="delDeliveryDate" class="form-input" required>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 공급자 정보 -->
+              <div class="doc-section">
+                <div class="section-title">공 급 자</div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>상호</label>
+                    <input type="text" id="delCompanyName" class="form-input" placeholder="㈜링스온" required>
+                  </div>
+                  <div class="form-group">
+                    <label>대표이사</label>
+                    <input type="text" id="delCEO" class="form-input" placeholder="나이준 (직인생략)" required>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>주소</label>
+                    <input type="text" id="delAddress" class="form-input" placeholder="경기도 안양시 동안구 시민대로 181, 2층" required>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 납품 내역 -->
+              <div class="doc-section">
+                <div class="section-title">납 품 내 역</div>
+                <table class="delivery-table">
+                  <thead>
+                    <tr>
+                      <th>품목</th>
+                      <th>규격</th>
+                      <th>단위</th>
+                      <th>수량</th>
+                      <th>납품확인</th>
+                      <th>비고</th>
+                    </tr>
+                  </thead>
+                  <tbody id="deliveryItems">
+                    <!-- 동적 생성 -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- 서명 -->
+              <div class="doc-section">
+                <div class="signature-section">
+                  <div class="signature-box">
+                    <label>확인자</label>
+                    <div class="sig-content">
+                      <input type="text" id="delAgreedName" class="form-input" placeholder="소속" style="width: 100%; margin-bottom: 0.5rem;">
+                      <input type="text" id="delAgreedTitle" class="form-input" placeholder="성명" style="width: 100%;">
+                      <div class="date-line">확인일: <input type="date" id="delAgreedDate" class="form-input" style="width: auto; display: inline-block;" required></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="save-delivery-btn">📥 저장</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script_v2.js"></script>
+</body>
+</html>
