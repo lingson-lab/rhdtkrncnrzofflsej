@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0300ce">
+  <title>공사 구축 관리 | 링스온</title>
+  <meta name="description" content="링스온 단지별 공사 일정·진행현황·재정정보·납품확인서 관리">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">ON</div>
+        <div class="brand-copy">
+          <strong>공사 구축 관리</strong>
+          <span>LINGSON ADMIN</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="주 메뉴">
+        <button class="nav-item is-active" data-view="calendarView">
+          <span class="nav-icon" data-icon="calendar"></span>
+          <span>캘린더</span>
+        </button>
+        <button class="nav-item" data-view="detailView">
+          <span class="nav-icon" data-icon="list"></span>
+          <span>상세 관리</span>
+        </button>
+        <button class="nav-item" data-view="receivablesView">
+          <span class="nav-icon" data-icon="wallet"></span>
+          <span>미수금 내역</span>
+        </button>
+        <button class="nav-item" data-view="deliveryView">
+          <span class="nav-icon" data-icon="document"></span>
+          <span>납품확인서</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <span class="status-dot"></span>
+        <div>
+          <strong>자동 저장</strong>
+          <small>브라우저 Local Storage</small>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" id="mobileMenu" aria-label="메뉴 열기">
+          <span data-icon="menu"></span>
+        </button>
+        <div class="topbar-copy">
+          <p class="eyebrow">LINGSON CONSTRUCTION CONTROL</p>
+          <h1 id="pageTitle">공사 일정</h1>
+          <p id="pageDesc">단지명과 공정 일정을 한눈에 확인하고 관리합니다.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="today-chip" id="todayChip"></span>
+          <button class="primary-button" id="openScheduleModal">
+            <span data-icon="plus"></span> 일정 추가
+          </button>
+        </div>
+      </header>
+
+      <!-- 캘린더 -->
+      <section class="view is-active" id="calendarView">
+        <div class="kpi-grid">
+          <article class="kpi-card">
+            <span>등록 단지</span>
+            <strong id="kpiComplexes">0</strong>
+            <small>일정 기준 자동 집계</small>
+          </article>
+          <article class="kpi-card">
+            <span>이번 달 일정</span>
+            <strong id="kpiMonthEvents">0</strong>
+            <small>선택 월 기준</small>
+          </article>
+          <article class="kpi-card">
+            <span>진행 중 단지</span>
+            <strong id="kpiDoing">0</strong>
+            <small>9단계 미완료</small>
+          </article>
+          <article class="kpi-card success">
+            <span>구축 완료</span>
+            <strong id="kpiDone">0</strong>
+            <small>9단계 완료</small>
+          </article>
+        </div>
+
+        <section class="panel calendar-panel">
+          <div class="panel-head calendar-head">
+            <div class="month-control">
+              <button class="icon-button" id="prevPeriod" aria-label="이전">
+                <span data-icon="chevron-left"></span>
+              </button>
+              <button class="ghost-button" id="goToday">오늘</button>
+              <button class="icon-button" id="nextPeriod" aria-label="다음">
+                <span data-icon="chevron-right"></span>
+              </button>
+              <h2 id="calendarLabel"></h2>
+            </div>
+
+            <div class="view-switch" role="group" aria-label="캘린더 보기">
+              <button class="is-active" data-mode="month">월간</button>
+              <button data-mode="week">주간</button>
+              <button data-mode="day">일일</button>
+            </div>
+          </div>
+
+          <div class="filter-row">
+            <label class="search-box">
+              <span data-icon="search"></span>
+              <input id="calendarSearch" type="search" placeholder="단지명 검색">
+            </label>
+            <select id="calendarCategory" aria-label="공정 카테고리">
+              <option value="">카테고리 전체</option>
+            </select>
+            <button class="ghost-button" id="resetCalendarFilter">초기화</button>
+          </div>
+
+          <div id="calendarContainer" class="calendar-container"></div>
+        </section>
+      </section>
+
+      <!-- 상세 관리 -->
+      <section class="view" id="detailView">
+        <div class="kpi-grid">
+          <article class="kpi-card">
+            <span>전체 단지</span>
+            <strong id="detailTotal">0</strong>
+            <small>관리 대상</small>
+          </article>
+          <article class="kpi-card">
+            <span>진행 중</span>
+            <strong id="detailDoing">0</strong>
+            <small>1~8단계</small>
+          </article>
+          <article class="kpi-card success">
+            <span>완료</span>
+            <strong id="detailDone">0</strong>
+            <small>9단계 완료</small>
+          </article>
+          <article class="kpi-card">
+            <span>운영 시작</span>
+            <strong id="detailOperating">0</strong>
+            <small>운영 시작일 등록 단지</small>
+          </article>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head detail-head">
+            <div>
+              <p class="section-label">PROJECT STATUS</p>
+              <h2>단지별 진행현황</h2>
+              <p class="section-help">단계·단지 기본정보·견적 내역은 입력 즉시 자동 저장됩니다.</p>
+            </div>
+            <div class="detail-filters">
+              <label class="search-box compact">
+                <span data-icon="search"></span>
+                <input id="projectSearch" type="search" placeholder="단지명 검색">
+              </label>
+              <select id="projectCategory">
+                <option value="">진행단계 전체</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="projectCards" class="project-grid"></div>
+          <div id="projectEmpty" class="empty-state" hidden>
+            <strong>등록된 단지가 없습니다.</strong>
+            <p>캘린더에서 일정을 추가하면 단지가 자동으로 생성됩니다.</p>
+          </div>
+        </section>
+      </section>
+
+      <!-- 미수금 내역 -->
+      <section class="view" id="receivablesView">
+        <div class="kpi-grid">
+          <article class="kpi-card danger">
+            <span>미수금 있는 단지</span>
+            <strong id="arOutstandingComplexes">0</strong>
+            <small>미입금 월이 있는 단지</small>
+          </article>
+          <article class="kpi-card success">
+            <span>정상 납부 단지</span>
+            <strong id="arCurrentComplexes">0</strong>
+            <small>미수금 없는 운영 단지</small>
+          </article>
+          <article class="kpi-card">
+            <span>총 미수 개월</span>
+            <strong id="arOutstandingMonths">0</strong>
+            <small>월별 미입금 건수</small>
+          </article>
+          <article class="kpi-card danger">
+            <span>총 미수금액</span>
+            <strong id="arOutstandingAmount">0원</strong>
+            <small>프로그램 사용료 기준</small>
+          </article>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head receivable-head">
+            <div>
+              <p class="section-label">ACCOUNTS RECEIVABLE</p>
+              <h2>단지별 미수금 내역</h2>
+              <p class="section-help">운영 시작월부터 현재월까지 월별 프로그램 사용료 입금 여부를 관리합니다.</p>
+            </div>
+            <div class="detail-filters">
+              <label class="search-box compact">
+                <span data-icon="search"></span>
+                <input id="receivableSearch" type="search" placeholder="단지명·단지코드 검색">
+              </label>
+              <select id="receivableStatusFilter">
+                <option value="">전체 상태</option>
+                <option value="outstanding">미수금 있음</option>
+                <option value="current">정상 납부</option>
+                <option value="setup">정보 설정 필요</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="receivable-table-wrap">
+            <table class="receivable-table">
+              <thead>
+                <tr>
+                  <th>단지명</th>
+                  <th>운영 시작일</th>
+                  <th>단지코드</th>
+                  <th>사업자번호</th>
+                  <th>단지 연락처</th>
+                  <th>월 사용료</th>
+                  <th>미수개월</th>
+                  <th>미수금액</th>
+                  <th>상태</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="receivableTableBody"></tbody>
+            </table>
+          </div>
+
+          <div id="receivableEmpty" class="empty-state" hidden>
+            <strong>표시할 단지가 없습니다.</strong>
+            <p>상세 관리에서 운영 시작일과 월 프로그램 사용료를 입력해 주세요.</p>
+          </div>
+        </section>
+      </section>
+
+      <!-- 납품확인서 -->
+      <section class="view" id="deliveryView">
+        <div class="delivery-layout">
+          <section class="panel editor-panel">
+            <div class="panel-head">
+              <div>
+                <p class="section-label">DELIVERY CONFIRMATION</p>
+                <h2>납품확인서 작성</h2>
+                <p class="section-help">단지를 선택하면 기본정보와 일정 기반 납품 항목을 불러옵니다.</p>
+              </div>
+              <div class="document-actions">
+                <button class="ghost-button" id="resetDelivery">초기화</button>
+                <button class="primary-button" id="saveDelivery">
+                  <span data-icon="save"></span> 저장
+                </button>
+              </div>
+            </div>
+
+            <form id="deliveryForm" class="form-stack" autocomplete="off">
+              <div class="form-section">
+                <h3>단지 정보</h3>
+                <div class="form-grid two">
+                  <label>
+                    단지명
+                    <select id="deliveryComplex">
+                      <option value="">단지 선택</option>
+                    </select>
+                  </label>
+                  <label>
+                    납품일자
+                    <input id="deliveryDate" type="date">
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>공급자 정보</h3>
+                <div class="form-grid two">
+                  <label>
+                    상호
+                    <input id="supplierName" value="㈜링스온" readonly>
+                  </label>
+                  <label>
+                    대표이사
+                    <input id="supplierCeo" value="나이준 (직인생략)" readonly>
+                  </label>
+                  <label class="span-2">
+                    주소
+                    <input id="supplierAddress" value="경기도 안양시 동안구 시민대로 181, 2층" readonly>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="section-line">
+                  <div>
+                    <h3>납품 항목</h3>
+                    <p>단지 일정의 카테고리를 기준으로 자동 생성할 수 있습니다.</p>
+                  </div>
+                  <div class="inline-actions">
+                    <button type="button" class="ghost-button small" id="generateDeliveryRows">일정에서 생성</button>
+                    <button type="button" class="text-button" id="addDeliveryRow">
+                      <span data-icon="plus"></span> 품목 추가
+                    </button>
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table class="editable-table">
+                    <thead>
+                      <tr>
+                        <th>품목</th>
+                        <th>규격</th>
+                        <th>단위</th>
+                        <th>수량</th>
+                        <th>확인</th>
+                        <th>비고</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="deliveryItemsBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>확인자</h3>
+                <div class="form-grid three">
+                  <label>
+                    소속
+                    <input id="confirmDept" placeholder="예: 관리사무소">
+                  </label>
+                  <label>
+                    성명
+                    <input id="confirmName" placeholder="확인자 성명">
+                  </label>
+                  <label>
+                    확인일
+                    <input id="confirmDate" type="date">
+                  </label>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <aside class="panel preview-panel">
+            <div class="preview-toolbar">
+              <div>
+                <strong>납품확인서 미리보기</strong>
+                <small id="deliverySaveStatus">저장 전</small>
+              </div>
+              <button class="ghost-button" id="printDelivery">
+                <span data-icon="print"></span> PDF / 인쇄
+              </button>
+            </div>
+            <div class="paper" id="deliveryPreview"></div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 일정 추가 모달 -->
+  <div class="modal-backdrop" id="scheduleModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
+      <div class="modal-head">
+        <div>
+          <p class="section-label">NEW SCHEDULE</p>
+          <h2 id="scheduleModalTitle">일정 추가</h2>
+        </div>
+        <button class="icon-button" id="closeScheduleModal" type="button" aria-label="닫기">
+          <span data-icon="close"></span>
+        </button>
+      </div>
+
+      <form id="scheduleForm" class="form-stack">
+        <label>
+          단지명
+          <input id="scheduleComplex" required placeholder="예: 검단금호어울림센트럴" autocomplete="off">
+        </label>
+
+        <label>
+          카테고리
+          <select id="scheduleCategory" required></select>
+        </label>
+
+        <div class="form-grid two">
+          <label>
+            시작일
+            <input id="scheduleStart" type="date" required>
+          </label>
+          <label>
+            종료일
+            <input id="scheduleEnd" type="date" required>
+          </label>
+        </div>
+
+        <label>
+          일정 내용
+          <textarea id="scheduleMemo" rows="3" placeholder="예: 출입통제 장비 설치"></textarea>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="ghost-button" id="cancelSchedule">취소</button>
+          <button type="submit" class="primary-button">일정 등록</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
